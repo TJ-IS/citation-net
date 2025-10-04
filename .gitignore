@@ -1,0 +1,21 @@
+
+citations/
+bak/
+docs/
+.env
+
+# Ignore data files
+*.csv
+*.json
+*.html
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
