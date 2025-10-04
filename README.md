@@ -22,7 +22,7 @@ uv sync
 
 1. 参考env.example，设置.env为母文件夹位置，其中包含data文件夹存放数据，运行以下命令将自动生成output文件夹及其中的引文网络
 
-2. 设置超参数，控制出度入度、判断逻辑和绘制孤立点
+2. 设置超参数，控制出度入度最低数量、出度入度判断逻辑和选择绘制孤立点
 
 ```bash
 uv run citation_net_generation.py
