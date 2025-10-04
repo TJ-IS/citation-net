@@ -27,3 +27,11 @@ uv sync
 ```bash
 uv run citation_net_generation.py
 ```
+
+## 运行结果
+
+abandon.csv: 去重并去除能被完全包含在其他文献标题里的文献，避免影响判断，记录在该文件
+
+citation_network{logic_out_in}.html: 单个/多个html图，点击圆圈可导航doi
+
+citation_summary_detailed.csv: 出度入度文件
