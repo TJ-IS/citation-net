@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Citation Network</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style type="text/css">
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: {{ bg_color }};
+            font-family: sans-serif;
+        }
+        
+        /* 页面主容器，使用Flexbox布局 */
+        #main-container {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* 图表容器 */
+        #network-container {
+            height: 100%;
+            width: 100%; /* 默认占满 */
+            transition: width 0.5s ease; /* 平滑过渡效果 */
+        }
+
+        /* 侧边栏容器 */
+        #side-panel {
+            width: 0; /* 默认宽度为0，即隐藏 */
+            height: 100%;
+            background-color: #1a202c; /* 深色背景 */
+            color: #e2e8f0;
+            overflow-y: auto; /* 内容超出时可滚动 */
+            transition: width 0.5s ease;
+            box-shadow: -5px 0px 15px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+
+        /* 侧边栏内容区域 */
+        #side-panel-content {
+            padding: 20px;
+            opacity: 0; /* 默认透明 */
+            transition: opacity 0.3s ease 0.3s; /* 延迟显示，效果更佳 */
+        }
+        
+        /* 当侧边栏激活时，改变布局和内容透明度 */
+        #main-container.panel-active #network-container {
+            width: 55%;
+        }
+        #main-container.panel-active #side-panel {
+            width: 45%;
+        }
+        #main-container.panel-active #side-panel-content {
+            opacity: 1;
+        }
+
+        /* 侧边栏内的元素样式 */
+        #side-panel h2 {
+            color: #63b3ed;
+            margin-top: 0;
+            font-size: 1.2em;
+        }
+        #side-panel hr {
+            border-color: #4a5568;
+            margin: 15px 0;
+        }
+        #side-panel strong {
+            color: #a0aec0;
+        }
+        #side-panel .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            color: #718096;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        #side-panel .close-btn:hover {
+            color: #e2e8f0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="main-container">
+        <!-- 图表容器 -->
+        <div id="network-container"></div>
+        
+        <!-- 侧边栏 -->
+        <div id="side-panel">
+            <span id="close-btn" class="close-btn">&times;</span>
+            <div id="side-panel-content">
+                <!-- 内容将由JS动态填充 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 左上角的信息框 (保持不变) -->
+    <div style="position: absolute; top: 15px; left: 15px; padding: 10px; background-color: rgba(40, 40, 40, 0.85); color: #f3f4f6; font-size: 13px; border-radius: 6px; border: 1px solid #4b5563; max-width: 300px; z-index: 5;">
+        <strong>Filter:</strong><br>{{ filter_text }}
+    </div>
+
+    <script type="text/javascript">
+        var nodes_data = {{ nodes_json }};
+        var edges_data = {{ edges_json }};
+        var vis_options = {{ options_json }};
+
+        var container = document.getElementById('network-container');
+        var nodes = new vis.DataSet(nodes_data);
+        var edges = new vis.DataSet(edges_data);
+        var data = {
+            nodes: nodes,
+            edges: edges
+        };
+        var network = new vis.Network(container, data, vis_options);
+        
+        // --- 侧边栏交互逻辑 ---
+        var mainContainer = document.getElementById('main-container');
+        var sidePanelContent = document.getElementById('side-panel-content');
+        var closeBtn = document.getElementById('close-btn');
+
+        function showSidePanel(nodeData) {
+            sidePanelContent.innerHTML = `
+                <h2>${nodeData.original_title || 'N/A'}</h2>
+                <hr>
+                <p><strong>Authors:</strong> ${nodeData.authors || 'N/A'}</p>
+                <p><strong>Year:</strong> ${nodeData.year || 'N/A'}</p>
+                <p><strong>Source:</strong> ${nodeData.source || 'N/A'}</p>
+                <hr>
+                <p><strong>Cited By (Original):</strong> ${nodeData.cited_by_original || 'N/A'}</p>
+                <p><strong>Cited by (In):</strong> ${nodeData.in_degree}</p>
+                <p><strong>Cites (Out):</strong> ${nodeData.out_degree}</p>
+                <hr>
+                <p><strong>Abstract:</strong></p>
+                <p>${nodeData.abstract || 'N/A'}</p>
+            `;
+            mainContainer.classList.add('panel-active');
+            // 稍后调整网络大小，以适应新的容器尺寸
+            setTimeout(() => { network.fit(); }, 500); 
+        }
+
+        function hideSidePanel() {
+            mainContainer.classList.remove('panel-active');
+            setTimeout(() => { network.fit(); }, 500);
+        }
+
+        // 1. 单击事件：显示/切换侧边栏
+        network.on("click", function (params) {
+            if (params.nodes.length > 0) {
+                var nodeId = params.nodes[0];
+                var nodeData = nodes.get(nodeId);
+                showSidePanel(nodeData);
+            } else {
+                hideSidePanel();
+            }
+        });
+
+        // 2. 双击事件：跳转DOI链接
+        network.on("doubleClick", function (params) {
+            if (params.nodes.length > 0) {
+                var nodeId = params.nodes[0];
+                var node = nodes.get(nodeId);
+                if (node.doi_url) {
+                    window.open(node.doi_url, '_blank');
+                }
+            }
+        });
+        
+        // 3. 关闭按钮事件
+        closeBtn.addEventListener('click', hideSidePanel);
+
+    </script>
+</body>
+</html>

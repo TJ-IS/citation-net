@@ -7,7 +7,6 @@ docs/
 # Ignore data files
 *.csv
 *.json
-*.html
 
 # Python-generated files
 __pycache__/
