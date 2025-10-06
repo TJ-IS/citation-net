@@ -238,7 +238,11 @@ def main():
     """主执行函数"""
     print(f"--- 开始分析项目: {ANALYSIS_BASE_FOLDER} ---")
     
-    DEGREE_THRESHOLD_PAIRS = [(1, 1), (2, 2), (5, 0), (0, 5)]
+    DEGREE_THRESHOLD_PAIRS = [
+        (0, 0), # 包含所有文献
+        (1, 1), # 包含所有引用至少1次 AND/OR 被引用至少1次的文献
+        (0, 1), # 包含所有被引用至少1次的文献（使用AND）
+        (2, 2)]  # 可根据需要调整
     USE_AND_LOGIC_FOR_DEGREES = True
     EXCLUDE_ISOLATED_NODES = True
     BACKGROUND_COLOR = '#111827'
